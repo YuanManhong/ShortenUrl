@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+const authRoutes = require('./auth/authRoutes');
 
 const app = express();
 
@@ -11,6 +12,7 @@ const app = express();
 app.use(cors());
 app.use(helmet());
 app.use(bodyParser.json());
+app.use('/api/auth', authRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
