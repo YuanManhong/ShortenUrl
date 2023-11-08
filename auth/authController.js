@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const UserModel = require('../models/userModel');
+const UserModel = require('../models/UserModel');
 
 //register
 exports.register = async (req, res) => {
@@ -12,11 +12,13 @@ exports.register = async (req, res) => {
         const newUser = await UserModel.create({
             username: req.body.username,
             password: hashedPassword,
+            tier: req.body.tier || 'tier1',
         });
         const savedUser = await newUser.save();
         res.status(201).json({
             id: savedUser._id,
             username: savedUser.username,
+            tier: savedUser.tier,
         });
     } catch (error) {
         res.status(500).json({message: error.message});
@@ -39,6 +41,7 @@ exports.login = async (req, res) => {
         const payload = {
             id: user._id,
             username: user.username,
+            tier: user.tier,
         };
 
         // Sign the JWT
@@ -52,3 +55,18 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+exports.authenticate = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1]; // Assumes Bearer token
+        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+            req.user = user;
+            next();
+        });
+    } else {
+        res.status(401).json({ message: "Authorization header is required" });
+    }
+};
